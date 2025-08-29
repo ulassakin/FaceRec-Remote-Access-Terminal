@@ -51,6 +51,7 @@ flowchart LR
     KL25Z -->|IR Remote Input| IR_Remote
     Python -->|Log entries| SQLite
 ```
+```
 ---
 
 ## 🔹 Project Structure
