@@ -42,7 +42,7 @@ This makes it a **smart access control system** blending biometrics with embedde
 ## 🔹 System Architecture
 
 ```markdown
-```mermaid
+
 flowchart LR
     Webcam -->|Face Recognition| Python
     Python -->|UART: timestamp or code| KL25Z
@@ -51,7 +51,7 @@ flowchart LR
     KL25Z -->|IR Remote Input| IR_Remote
     Python -->|Log entries| SQLite
 ```
-```
+
 ---
 
 ## 🔹 Project Structure
