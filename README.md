@@ -1,4 +1,4 @@
-# Remote Access Terminal – Embedded Face Recognition System
+# Remote Access Terminal – Dual Authentication Embedded System
 
 [![Language: C](https://img.shields.io/badge/language-C-blue.svg)]()
 [![Language: Python](https://img.shields.io/badge/language-Python-yellow.svg)]()
@@ -7,49 +7,55 @@
 ---
 
 ## 🔹 Overview
-**Remote Access Terminal** is a hybrid **embedded + computer vision** project.  
-It integrates a **Python-based face recognition system** with **embedded C firmware** running on the **NXP KL25Z microcontroller**.  
+This project implements a **dual-layer access control system** that combines **biometric face recognition** with a **4-digit IR remote password**.  
+It integrates a **Python application** (for face recognition and logging) with **embedded C firmware** running on the NXP **KL25Z** microcontroller.  
 
-- **Face recognition** authenticates users via webcam.  
-- **UART communication** securely transfers events to the KL25Z.  
-- **KL25Z firmware** manages sensors, LCD output, and IR remote control.  
-- **SQLite3 database** stores access logs for auditing.  
+- **Layer 1 – Face Recognition (Python):** Webcam detects and identifies known users.  
+- **Layer 2 – IR Remote Password (Embedded C):** After recognition, the system requests a 4-digit IR password via an NEC-protocol remote.  
 
-This makes it a **smart access control system** blending biometrics with embedded hardware.
+Only when **both layers are satisfied** does the system grant access, display user information on the LCD, and log the event into a database.  
 
 ---
 
 ## 🔹 Features
 
-### 🖥️ Python (PC Side)
-- Real-time face recognition using **OpenCV** + `face_recognition` library.
-- Sends authentication timestamps to KL25Z over **UART**.
-- Logs all recognized users into **SQLite database**.
-- Utility scripts for viewing/deleting logs.
+### 🖥️ Face Recognition (Python)
+- Real-time face recognition using the `face_recognition` library and OpenCV.  
+- Sends **timestamp + recognition result** to KL25Z via UART.  
+- If unknown face detected → sends code `0`, system stays locked.  
+- Each recognition attempt is logged in **SQLite3** database (`access_logs.db`).  
 
-### ⚙️ Embedded KL25Z (C Firmware)
-- **LCD (I²C)** → displays system info and authentication status.
-- **IR Remote** → provides user input capability.
-- **DHT11 Sensor** → temperature and humidity readings (`temp_mois.c/h`).
-- **Structured codebase**: clean separation of modules (`LCD.c`, `IRremote.c`, etc.).
+### ⚙️ KL25Z Embedded System
+- **LCD (20x4, I²C):** Displays status messages, user greetings, date/time, temperature and humidity.  
+- **IR Remote Receiver (NEC protocol):**  
+  - Captures signal edges to decode binary values.  
+  - Validates a **4-digit password** (default: `1668`).  
+  - Wrong attempts show *Wrong Password – Try Again*.  
+- **DHT11 Sensor:** Provides live temperature and humidity readings.  
+- **Access Timing:**  
+  - After correct password → *Access Granted* for **10 seconds**, then system auto-locks.  
 
 ### 📊 Database Utilities
-- `sqlite_items.py` → view all entries in the access log.  
-- `sqlite_delete.py` → clear the log table.  
+- `sqlite_items.py` → View all database logs (ID, user, timestamp).  
+- `sqlite_delete.py` → Clear all log entries.  
 
 ---
 
-## 🔹 System Architecture
+## 🔹 System Workflow
 
-```markdown
-
-flowchart LR
-    Webcam -->|Face Recognition| Python
-    Python -->|UART: timestamp or code| KL25Z
-    KL25Z -->|LCD Output| LCD
-    KL25Z -->|Sensor Data| DHT11
-    KL25Z -->|IR Remote Input| IR_Remote
-    Python -->|Log entries| SQLite
+```mermaid
+flowchart TD
+    Start[System Locked] --> Webcam
+    Webcam -->|Unknown Face| LCD_Locked[Display: Locked]
+    Webcam -->|Known Face| UART[UART sends timestamp]
+    UART --> KL25Z
+    KL25Z --> LCD_Prompt[Display: Enter Password]
+    LCD_Prompt --> IR[IR Remote Input]
+    IR -->|Wrong| LCD_Wrong[Wrong Password - Try Again]
+    IR -->|Correct| LCD_Access[Access Granted + Welcome User]
+    LCD_Access --> Temp[Show Temp/Humidity + Date/Time]
+    LCD_Access --> Timer[10 sec display]
+    Timer --> Start
 ```
 
 ---
@@ -73,7 +79,7 @@ Remote-Access-Terminal/
 │   ├── face_recognition_212Project.py
 │   ├── sqlite_items.py
 │   ├── sqlite_delete.py
-│   ├── access_logs.db   (ignored in .gitignore if not needed)
+│   ├── access_logs.db   (ignored if sensitive)
 │
 │── README.md
 │── .gitignore
@@ -81,63 +87,57 @@ Remote-Access-Terminal/
 
 ---
 
-## 🔹 How It Works
-
-1. **Face Recognition (Python)**  
-   - Loads known faces (e.g., `me.jpg`, `biden.jpg`).  
-   - Matches webcam input against stored encodings.  
-   - On recognition → sends timestamp string to KL25Z.  
-   - On unknown → sends `"0"` code.  
-   - Logs all recognized users to SQLite.  
-
-2. **KL25Z Firmware (Embedded C)**  
-   - Listens on UART.  
-   - Displays authentication status on **LCD**.  
-   - Can interact with user via **IR remote**.  
-   - Continuously reads **DHT11** sensor values.  
-
-3. **Database Management**  
-   - View log entries with `sqlite_items.py`.  
-   - Delete logs with `sqlite_delete.py`.  
+## 🔹 Hardware Requirements
+- **Board:** NXP KL25Z (ARM Cortex-M0+)  
+- **Peripherals:**  
+  - LCD 20x4 (I²C communication)  
+  - IR Remote + Receiver (NEC protocol)  
+  - DHT11 Sensor (temperature & humidity)  
 
 ---
 
-## 🔹 Requirements
+## 🔹 Software Requirements
 
-### 🔧 Hardware
-- **Board:** NXP KL25Z (ARM Cortex-M0+)
-- **Peripherals:**
-  - I²C LCD (20x4 recommended)
-  - IR Remote + Receiver
-  - DHT11 sensor
+### Embedded Side
+- Toolchain: Keil uVision / MCUXpresso / GCC ARM Embedded  
+- C source files (modular structure)  
 
-### 💻 Software
-- **Embedded Side:**  
-  - Keil uVision / MCUXpresso / or GCC ARM Toolchain  
-- **Python Side:**  
-  - Python 3.8+  
-  - Install dependencies:  
-    ```bash
-    pip install face_recognition opencv-python numpy pyserial
-    ```
+### Python Side
+- Python 3.8+  
+- Required libraries:  
+  ```bash
+  pip install face_recognition opencv-python numpy pyserial
+  ```
+- SQLite (included in Python standard library)  
 
 ---
 
 ## 🔹 Usage
 
 ### 1. Embedded Side
-1. Flash `embedded/` firmware to KL25Z.  
-2. Connect LCD, IR receiver, and DHT11.  
+1. Flash the `embedded/` firmware onto the KL25Z.  
+2. Connect LCD, IR receiver, and DHT11 sensor.  
 
 ### 2. Python Side
-1. Place known face images (`me.jpg`, `biden.jpg`, etc.) in the working directory.  
+1. Place known face images (`me.jpg`, `friend.jpg`, etc.) in the same folder.  
 2. Run the main script:  
    ```bash
    python face_recognition_212Project.py
-   ```
-3. Press **Q** to exit the program.  
+   ```  
+3. The program will open a webcam window for live detection.  
+4. Press **Q** to quit.  
 
-### 3. Logs
+### 3. Access Flow
+- Unknown face → LCD stays *Locked*.  
+- Known face → UART sends timestamp → LCD: *Enter Password*.  
+- Wrong IR password → *Wrong Password*.  
+- Correct password → *Access Granted* + LCD shows:  
+  - **Welcome message**  
+  - **Date & time**  
+  - **Temperature & humidity**  
+- After 10 seconds → system relocks.  
+
+### 4. Logs
 - View logs:  
   ```bash
   python sqlite_items.py
@@ -149,22 +149,30 @@ Remote-Access-Terminal/
 
 ---
 
-## 🔹 Demo Flow
-1. User appears in front of webcam.  
-2. Python recognizes user and logs event.  
-3. Timestamp sent to KL25Z.  
-4. KL25Z displays status on LCD.  
-5. IR remote + sensors provide extended interaction.  
+## 🔹 Future Improvements
+- Add **EEPROM/RTC** for offline logging when Python app is disconnected.  
+- Create a **web-based dashboard** for remote log monitoring.  
+- Expand IR remote functionality with menu navigation.  
+- Support **wireless communication (Wi-Fi/MQTT)** for IoT integration.  
 
 ---
 
-## 🔹 Future Improvements
-- Add RTC (DS1302) and EEPROM for offline timestamp storage.  
-- Extend database with web dashboard for monitoring.  
-- Support wireless communication (e.g., Wi-Fi or MQTT).  
+## 🔹 Demo Scenario
+
+1. System starts with *Locked* message on LCD.  
+2. An unknown user appears → LCD still shows *Locked*.  
+3. The rightful user appears → recognized, timestamp sent via UART.  
+4. LCD shows *Enter Password*.  
+5. User enters wrong password → *Wrong Password – Try Again*.  
+6. User enters correct password (`1668`) → *Access Granted*.  
+7. LCD displays:  
+   - Welcome message with username  
+   - Date & Time (from Python)  
+   - Temperature & Humidity (from DHT11)  
+8. After 10 seconds → system relocks, loop restarts.  
 
 ---
 
 ## 🔹 Author
 Developed by **Ulaş Sakın**  
-2025 – Embedded Systems + Computer Vision Project
+2025 – E212 Embedded Systems + Computer Vision Project
