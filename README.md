@@ -153,13 +153,6 @@ Remote-Access-Terminal/
 
 ---
 
-## 🔹 Future Improvements
-- Add **EEPROM/RTC** for offline logging when Python app is disconnected.  
-- Create a **web-based dashboard** for remote log monitoring.  
-- Expand IR remote functionality with menu navigation.  
-- Support **wireless communication (Wi-Fi/MQTT)** for IoT integration.  
-
----
 
 ## 🔹 Demo Scenario
 
