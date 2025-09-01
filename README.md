@@ -172,4 +172,4 @@ Remote-Access-Terminal/
 
 ## 🔹 Author
 Developed by **Ulaş Sakın**  
-2025 – E212 Embedded Systems + Computer Vision Project
+2025 – EEE212 Embedded Systems + Computer Vision Project
