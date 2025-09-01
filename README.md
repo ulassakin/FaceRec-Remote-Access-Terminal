@@ -165,7 +165,7 @@ Remote-Access-Terminal/
 
 1. System starts with *Locked* message on LCD.  
 2. An unknown user appears → LCD still shows *Locked*.  
-3. The rightful user appears → recognized, timestamp sent via UART.  
+3. The rightful user appears → Face recognized, timestamp sent via UART.  
 4. LCD shows *Enter Password*.  
 5. User enters wrong password → *Wrong Password – Try Again*.  
 6. User enters correct password (`1668`) → *Access Granted*.  
