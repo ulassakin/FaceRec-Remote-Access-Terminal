@@ -153,19 +153,12 @@ Remote-Access-Terminal/
 
 ---
 
-## 🔹 Future Improvements
-- Add **EEPROM/RTC** for offline logging when Python app is disconnected.  
-- Create a **web-based dashboard** for remote log monitoring.  
-- Expand IR remote functionality with menu navigation.  
-- Support **wireless communication (Wi-Fi/MQTT)** for IoT integration.  
-
----
 
 ## 🔹 Demo Scenario
 
 1. System starts with *Locked* message on LCD.  
 2. An unknown user appears → LCD still shows *Locked*.  
-3. The rightful user appears → recognized, timestamp sent via UART.  
+3. The rightful user appears → Face recognized, timestamp sent via UART.  
 4. LCD shows *Enter Password*.  
 5. User enters wrong password → *Wrong Password – Try Again*.  
 6. User enters correct password (`1668`) → *Access Granted*.  
@@ -179,4 +172,4 @@ Remote-Access-Terminal/
 
 ## 🔹 Author
 Developed by **Ulaş Sakın**  
-2025 – E212 Embedded Systems + Computer Vision Project
+2025 – EEE212 Embedded Systems + Computer Vision Project
